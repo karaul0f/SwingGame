@@ -96,10 +96,6 @@ void ASwingGameCharacter::Look(const FInputActionValue& Value)
 
 void ASwingGameCharacter::DoMove(float Right, float Forward)
 {
-	// Always feed horizontal axis to SwingComponent for swing boosting
-	if (SwingComponent)
-		SwingComponent->AddSwingInput(Right);
-
 	// Block normal locomotion while swinging
 	if (SwingComponent && SwingComponent->bIsSwinging)
 		return;

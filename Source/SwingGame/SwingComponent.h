@@ -15,10 +15,10 @@ enum class ESwingState : uint8
 
 /**
  * Add to ASwingGameCharacter to enable pole-swinging.
+ * The character swings automatically once grabbed — the player can only jump off.
  *
  * Wire-up (already done in SwingGameCharacter.cpp):
  *   DoJumpStart() → OnJumpPressed()
- *   DoMove(Right, Forward) → AddSwingInput(Right)
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SWINGGAME_API USwingComponent : public UActorComponent
@@ -41,7 +41,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Swing")
     void OnJumpPressed();
 
-    /** Call every tick with horizontal axis value (-1…+1) to boost the swing. */
+    /** @deprecated Swing input is now automatic — this method is a no-op. */
     UFUNCTION(BlueprintCallable, Category = "Swing")
     void AddSwingInput(float AxisValue);
 
@@ -75,8 +75,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
     float GrabDetectionRadius = 220.0f;
 
+    /** Force applied automatically each frame to keep the swing going.
+     *  Acts in the direction of current angular velocity (energy pumping). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
-    float SwingInputBoost = 3.0f;
+    float AutoSwingForce = 3.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
     float GrabTransitionTime = 0.18f;
@@ -108,5 +110,4 @@ private:
     float   GrabAlpha          = 0.0f;
     FVector GrabStartLocation  = FVector::ZeroVector;
     FVector GrabTargetLocation = FVector::ZeroVector;
-    float   PendulumInput      = 0.0f;
 };

@@ -32,8 +32,7 @@ void USwingComponent::TickComponent(
         default: break;
     }
 
-    bIsSwinging   = (SwingState != ESwingState::None);
-    PendulumInput = 0.0f;
+    bIsSwinging = (SwingState != ESwingState::None);
 }
 
 // ---------------------------------------------------------------------------
@@ -48,9 +47,9 @@ void USwingComponent::OnJumpPressed()
         Release();
 }
 
-void USwingComponent::AddSwingInput(float AxisValue)
+void USwingComponent::AddSwingInput(float /*AxisValue*/)
 {
-    PendulumInput = AxisValue;
+    // No-op — swing is now fully automatic.
 }
 
 // ---------------------------------------------------------------------------
@@ -160,7 +159,14 @@ void USwingComponent::TickSwinging(float DeltaTime)
     const float     Alpha = -(G / HangLength) * FMath::Sin(SwingAngle);
 
     SwingAngularVelocity += Alpha * DeltaTime;
-    SwingAngularVelocity += PendulumInput * SwingInputBoost * DeltaTime;
+
+    // Auto-swing: pump energy in the direction of current motion.
+    // When nearly stationary, push away from equilibrium based on angle.
+    const float Dir = FMath::Abs(SwingAngularVelocity) > 0.05f
+        ? FMath::Sign(SwingAngularVelocity)
+        : FMath::Sign(SwingAngle);
+    SwingAngularVelocity += Dir * AutoSwingForce * DeltaTime;
+
     SwingAngularVelocity *= FMath::Pow(SwingDamping, DeltaTime * 60.0f);
 
     SwingAngle = FMath::Clamp(
