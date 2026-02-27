@@ -1,0 +1,38 @@
+# ----- Unreal Engine 5 .gitignore -----
+
+# Compiled binaries / build artifacts
+Binaries/
+Intermediate/
+DerivedDataCache/
+
+# Editor / session data
+Saved/
+
+# Visual Studio
+.vs/
+.vsconfig
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+
+# Generated project files (UE regenerates these from .uproject)
+*.xcworkspace
+*.xcodeproj
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Content/Developers — per-user scratch content
+Content/Developers/
+
+# Content/Collections — editor collections (local)
+Content/Collections/
