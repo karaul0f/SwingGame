@@ -330,6 +330,29 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
     float PitchAngle = FMath::Atan2(-SurfaceNormal.X, SurfaceNormal.Z);
     float RollAngle = FMath::Atan2(SurfaceNormal.Y, SurfaceNormal.Z);
 
+    // Factor in movement direction for dynamic lean
+    FVector Velocity = CMC->Velocity;
+    FVector HorizontalVelocity = FVector(Velocity.X, Velocity.Y, 0.0f);
+
+    if (!HorizontalVelocity.IsNearlyZero())
+    {
+        // Normalize movement direction
+        FVector MovementDir = HorizontalVelocity.GetSafeNormal();
+
+        // Get the character's forward direction (affected only by yaw, not pitch/roll)
+        FRotator CurrentRot = OwnerCharacter->GetActorRotation();
+        FVector CharForward = FRotationMatrix(FRotator(0.0f, CurrentRot.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+
+        // Calculate how much the movement direction aligns with surface normal
+        // This determines if character is moving up or down slope
+        float SlopeInfluence = FVector::DotProduct(MovementDir, SurfaceNormal);
+
+        // Add movement-based lean: character leans forward when moving upslope
+        // Clamp the lean to prevent over-tilting (max ±30 degrees additional lean)
+        float MovementLean = FMath::Clamp(SlopeInfluence * 45.0f, -30.0f, 30.0f);
+        PitchAngle += FMath::DegreesToRadians(MovementLean);
+    }
+
     // Create target rotation (preserve character's yaw)
     FRotator CurrentRot = OwnerCharacter->GetActorRotation();
     FRotator TargetRot(

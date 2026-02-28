@@ -61,7 +61,7 @@
 
 ## 6. Slope-following character rotation during walking
 **Date:** 2026-03-01
-**Decision:** Character tilts/leans to align with ground surface slope when walking on uneven terrain.
+**Decision:** Character tilts/leans to align with ground surface slope AND movement direction when walking on uneven terrain.
 **Implementation:**
 - Added `TickWalkingSlope(float DeltaTime)` private method to `USwingComponent`
 - In `TickComponent`: Call `TickWalkingSlope()` when character is on ground and not swinging
@@ -70,7 +70,11 @@
   - Extracts surface normal from hit result
   - Calculates **pitch angle** from X component of normal: `atan2(-SurfaceNormal.X, SurfaceNormal.Z)`
   - Calculates **roll angle** from Y component of normal: `atan2(SurfaceNormal.Y, SurfaceNormal.Z)`
-  - Creates target rotation: pitch and roll from surface, **yaw preserved from current character rotation**
+  - **Movement-based lean**: Gets horizontal velocity vector and dot-product with surface normal
+    - If moving upslope (positive dot product), character leans forward
+    - If moving downslope (negative dot product), character leans backward
+    - Movement lean is clamped to ±30° to prevent over-tilting
+  - Creates target rotation: pitch (surface + movement) and roll from surface, **yaw preserved from current character rotation**
   - Uses smooth interpolation (speed 5.0) to gradually rotate from current to target rotation
 - Only active when `IsMovingOnGround()` returns true — disabled in air or while swinging
-**Rationale:** Walking on slopes with fixed upright orientation looks stiff and unnatural. Slope-following creates natural leaning that matches the terrain and improves visual feedback during movement.
+**Rationale:** Walking on slopes with fixed upright orientation looks stiff and unnatural. Combining surface-normal tilt with movement-based lean creates natural leaning that matches both terrain and direction of travel, improving visual feedback and immersion.
