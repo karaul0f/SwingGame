@@ -128,11 +128,11 @@ void ASwingGameCharacter::DoJumpStart()
 	// In air: try to grab a nearby pole, or release if already swinging
 	if (SwingComponent && !GetCharacterMovement()->IsMovingOnGround())
 	{
+		const bool bWasSwinging = SwingComponent->bIsSwinging;
 		SwingComponent->OnJumpPressed();
 
-		// If we just grabbed (or were already swinging and just released),
-		// don't trigger a normal jump
-		if (SwingComponent->SwingState != ESwingState::None)
+		// If we just grabbed or just released from a swing, don't trigger a normal jump
+		if (SwingComponent->bIsSwinging || bWasSwinging)
 			return;
 	}
 

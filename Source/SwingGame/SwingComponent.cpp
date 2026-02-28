@@ -32,6 +32,17 @@ void USwingComponent::TickComponent(
         default: break;
     }
 
+    // Restore air braking once the character lands after a swing release
+    if (bNeedsDecelRestore && OwnerCharacter)
+    {
+        UCharacterMovementComponent* CMC = OwnerCharacter->GetCharacterMovement();
+        if (CMC && CMC->IsMovingOnGround())
+        {
+            CMC->BrakingDecelerationFalling = SavedBrakingDecelFalling;
+            bNeedsDecelRestore = false;
+        }
+    }
+
     bIsSwinging = (SwingState != ESwingState::None);
 }
 
@@ -114,6 +125,12 @@ void USwingComponent::OnGrabbed(ASwingPole* Pole)
     UCharacterMovementComponent* CMC = OwnerCharacter->GetCharacterMovement();
     if (CMC)
     {
+        // Save original air braking for later restore
+        if (!bNeedsDecelRestore)
+        {
+            SavedBrakingDecelFalling = CMC->BrakingDecelerationFalling;
+        }
+
         CMC->StopMovementImmediately();
         CMC->GravityScale = 0.0f;
         CMC->SetMovementMode(MOVE_Flying);
@@ -173,8 +190,14 @@ void USwingComponent::TickSwinging(float DeltaTime)
         SwingAngle + SwingAngularVelocity * DeltaTime,
         -MaxSwingAngle, MaxSwingAngle);
 
+    const FVector OldPos = OwnerCharacter->GetActorLocation();
     const FVector NewPos = PivotWorldLocation
         + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
+
+    if (DeltaTime > KINDA_SMALL_NUMBER)
+    {
+        CachedSwingVelocity = (NewPos - OldPos) / DeltaTime;
+    }
 
     OwnerCharacter->SetActorLocation(NewPos, false, nullptr, ETeleportType::TeleportPhysics);
 
@@ -202,6 +225,10 @@ void USwingComponent::Release()
     {
         CMC->GravityScale = 1.0f;
         CMC->SetMovementMode(MOVE_Falling);
+
+        // Remove air braking so horizontal momentum is preserved in flight
+        CMC->BrakingDecelerationFalling = 0.0f;
+        bNeedsDecelRestore = true;
     }
 
     OwnerCharacter->LaunchCharacter(CalcLaunchVelocity(), true, true);
@@ -210,8 +237,5 @@ void USwingComponent::Release()
 
 FVector USwingComponent::CalcLaunchVelocity() const
 {
-    const float Speed      = SwingAngularVelocity * HangLength * LaunchSpeedMultiplier;
-    const float TSign      = (SwingAngularVelocity >= 0.0f) ? 1.0f : -1.0f;
-    const float TangAngle  = SwingAngle + TSign * HALF_PI;
-    return FVector(FMath::Sin(TangAngle), 0.0f, -FMath::Cos(TangAngle)) * Speed;
+    return CachedSwingVelocity * LaunchSpeedMultiplier;
 }

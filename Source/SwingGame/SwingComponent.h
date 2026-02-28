@@ -84,7 +84,7 @@ public:
     float GrabTransitionTime = 0.18f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
-    float LaunchSpeedMultiplier = 1.1f;
+    float LaunchSpeedMultiplier = 1.8f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
     float SwingDamping = 0.985f;
@@ -110,4 +110,11 @@ private:
     float   GrabAlpha          = 0.0f;
     FVector GrabStartLocation  = FVector::ZeroVector;
     FVector GrabTargetLocation = FVector::ZeroVector;
+
+    /** Actual frame-by-frame velocity during swing, used for launch */
+    FVector CachedSwingVelocity = FVector::ZeroVector;
+
+    /** Saved BrakingDecelerationFalling to restore after post-release flight */
+    float SavedBrakingDecelFalling = 0.0f;
+    bool  bNeedsDecelRestore       = false;
 };
