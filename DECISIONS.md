@@ -58,3 +58,19 @@
 - If `bRotateAroundGripPoint` is enabled, socket name must be updated to a valid wolf socket (or feature should be disabled)
 - Wolf animations don't match humanoid AnimBP — may need adjustment or separate animation blueprint
 **Rationale:** User requested a wolf model to replace the default humanoid character for thematic variety.
+
+## 6. Slope-following character rotation during walking
+**Date:** 2026-03-01
+**Decision:** Character tilts/leans to align with ground surface slope when walking on uneven terrain.
+**Implementation:**
+- Added `TickWalkingSlope(float DeltaTime)` private method to `USwingComponent`
+- In `TickComponent`: Call `TickWalkingSlope()` when character is on ground and not swinging
+- `TickWalkingSlope` logic:
+  - Performs a **line trace** downward 200 units from character to detect ground surface
+  - Extracts surface normal from hit result
+  - Calculates **pitch angle** from X component of normal: `atan2(-SurfaceNormal.X, SurfaceNormal.Z)`
+  - Calculates **roll angle** from Y component of normal: `atan2(SurfaceNormal.Y, SurfaceNormal.Z)`
+  - Creates target rotation: pitch and roll from surface, **yaw preserved from current character rotation**
+  - Uses smooth interpolation (speed 5.0) to gradually rotate from current to target rotation
+- Only active when `IsMovingOnGround()` returns true — disabled in air or while swinging
+**Rationale:** Walking on slopes with fixed upright orientation looks stiff and unnatural. Slope-following creates natural leaning that matches the terrain and improves visual feedback during movement.

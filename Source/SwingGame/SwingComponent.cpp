@@ -33,6 +33,18 @@ void USwingComponent::TickComponent(
         default: break;
     }
 
+    // Apply slope-following rotation when walking on ground
+    if (!OwnerCharacter)
+        OwnerCharacter = Cast<ACharacter>(GetOwner());
+    if (OwnerCharacter && SwingState == ESwingState::None)
+    {
+        UCharacterMovementComponent* CMC = OwnerCharacter->GetCharacterMovement();
+        if (CMC && CMC->IsMovingOnGround())
+        {
+            TickWalkingSlope(DeltaTime);
+        }
+    }
+
     // Restore air braking once the character lands after a swing release
     if (bNeedsDecelRestore && OwnerCharacter)
     {
@@ -271,6 +283,63 @@ void USwingComponent::Release()
 
     OwnerCharacter->LaunchCharacter(CalcLaunchVelocity(), true, true);
     CurrentPole = nullptr;
+}
+
+// ---------------------------------------------------------------------------
+// Walking slope alignment
+// ---------------------------------------------------------------------------
+
+void USwingComponent::TickWalkingSlope(float DeltaTime)
+{
+    if (!OwnerCharacter) return;
+
+    UCharacterMovementComponent* CMC = OwnerCharacter->GetCharacterMovement();
+    if (!CMC) return;
+
+    // Get character feet location for trace
+    FVector TraceStart = OwnerCharacter->GetActorLocation();
+    FVector TraceEnd = TraceStart - FVector(0.0f, 0.0f, 200.0f);
+
+    // Trace to find ground surface
+    FHitResult HitResult;
+    FCollisionQueryParams QueryParams(FName(TEXT("SlopeTrace")), false, OwnerCharacter);
+
+    bool bHit = GetWorld()->LineTraceSingleByChannel(
+        HitResult,
+        TraceStart,
+        TraceEnd,
+        ECC_WorldStatic,
+        QueryParams);
+
+    if (!bHit || !HitResult.IsValidBlockingHit())
+    {
+        // No ground found, return to upright rotation
+        FRotator CurrentRot = OwnerCharacter->GetActorRotation();
+        FRotator TargetRot(0.0f, CurrentRot.Yaw, 0.0f);
+        OwnerCharacter->SetActorRotation(
+            FMath::RInterpTo(CurrentRot, TargetRot, DeltaTime, 5.0f));
+        return;
+    }
+
+    // Get surface normal
+    FVector SurfaceNormal = HitResult.ImpactNormal;
+
+    // Calculate pitch and roll from surface normal
+    // Pitch: tilt forward/backward based on X component of normal
+    // Roll: tilt side-to-side based on Y component of normal
+    float PitchAngle = FMath::Atan2(-SurfaceNormal.X, SurfaceNormal.Z);
+    float RollAngle = FMath::Atan2(SurfaceNormal.Y, SurfaceNormal.Z);
+
+    // Create target rotation (preserve character's yaw)
+    FRotator CurrentRot = OwnerCharacter->GetActorRotation();
+    FRotator TargetRot(
+        FMath::RadiansToDegrees(PitchAngle),
+        CurrentRot.Yaw,
+        FMath::RadiansToDegrees(RollAngle));
+
+    // Smoothly interpolate to target rotation
+    FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaTime, 5.0f);
+    OwnerCharacter->SetActorRotation(NewRot);
 }
 
 FVector USwingComponent::CalcLaunchVelocity() const

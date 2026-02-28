@@ -105,6 +105,7 @@ private:
     void OnGrabbed(class ASwingPole* Pole);
     void TickGrabbing(float DeltaTime);
     void TickSwinging(float DeltaTime);
+    void TickWalkingSlope(float DeltaTime);
     void Release();
     FVector CalcLaunchVelocity() const;
 

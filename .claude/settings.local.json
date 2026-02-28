@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git add \"Content/Blueprints/BP_SwingPole.uasset\" \"Content/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/D/86/TYEF393HL5ARXNXZFBK710.uasset\" \"Content/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/0/9Y/\")",
+      "Bash(git add DECISIONS.md)",
+      "Bash(git add DECISIONS.md \"Source/SwingGame/SwingComponent.cpp\" \"Source/SwingGame/SwingComponent.h\" \"Source/SwingGame/SwingGameCharacter.cpp\")",
+      "Bash(cmd /c \"C:\\\\Program Files\\\\Epic Games\\\\UE_5.4\\\\Engine\\\\Build\\\\BatchFiles\\\\Build.bat\" SwingGame Win64 Development -Project=\"c:\\\\Users\\\\karaul0f\\\\Documents\\\\Unreal Projects\\\\SwingGame\\\\SwingGame.uproject\")",
+      "Bash(git checkout Source/SwingGame/SwingComponent.cpp Source/SwingGame/SwingComponent.h)",
+      "Bash(git checkout DECISIONS.md)",
+      "Bash(ls -la *.uasset)",
+      "Bash(git add Source/SwingGame/SwingComponent.cpp Source/SwingGame/SwingComponent.h DECISIONS.md)",
+      "Bash(git add Source/SwingGame/SwingComponent.cpp)",
+      "Bash(cd /c/Users/karaul0f/Documents/Unreal Projects/SwingGame)",
+      "Read(//c/Program Files/Epic Games/**)",
+      "Bash(\"c:/Program Files/Epic Games/UE_5.7/Engine/Build/BatchFiles/Build.bat\" -Target=\"SwingGameEditor\" -Platform=\"Win64\" -Configuration=\"Development\")",
+      "Bash(\"c:/Program Files/Epic Games/UE_5.7/Engine/Build/BatchFiles/Build.bat\" SwingGame Win64 Development)",
+      "Bash(\"c:/Program Files/Epic Games/UE_5.7/Engine/Build/BatchFiles/RunUAT.bat\" BuildPlugin -Plugin=\"SwingGame.uplugin\" -Package=\"Packaged\" -Rocket)",
+      "Bash(\"c:/Program Files/Epic Games/UE_5.7/Engine/Binaries/Win64/UnrealEditor.exe\" -run=GenerateProjectFiles \"SwingGame.uproject\")",
+      "Bash(pkill -f UnrealEditor.exe)",
+      "Bash(git add -A)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\karaul0f\\.claude\\projects\\c--Users-karaul0f-Documents-Unreal-Projects-SwingGame\\memory"
+    ]
+  }
+}
