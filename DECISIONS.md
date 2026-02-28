@@ -39,9 +39,22 @@
 - In `OnGrabbed`: When `bRotateAroundGripPoint` is true, calculate grip socket world location from skeletal mesh and store as local offset
 - In `TickSwinging`:
   - Calculate target rotation based on swing direction (facing direction of motion)
-  - Character leans forward/backward with swing angle (Pitch rotation multiplied by 1.5 for pronounced effect)
+  - Character leans forward/backward with swing angle (Pitch rotation multiplied by 0.8x for balanced effect)
   - Apply target rotation to grip socket offset to get world-space position
   - Position character with soft correction (50%) to keep grip socket near pivot while maintaining swing physics
   - This makes the character appear to hang from the grip point while rotating around it
 - When disabled (default), behavior is 100% identical to original code
 **Rationale:** Previous implementation positioned the character's center around the pole, making the grip point feel disconnected. With this feature enabled, the character visually grips the pole with a specific socket, leans dynamically with the swing motion, and rotates naturally around that point as it swings, improving physical realism and visual feedback. Feature is opt-in to avoid breaking existing setups.
+
+## 5. Replace humanoid character with wolf model
+**Date:** 2026-02-28
+**Decision:** Replaced the default SK_Mannequin skeleton and mesh with a realistic wolf model (wolf_demo) from Unreal Marketplace.
+**Implementation:**
+- Downloaded "Realistic_Wolf_3D_Model_2_0_Demo_Free_Download_" from Unreal Marketplace
+- Replaced SK_Mannequin with wolf_demo skeletal mesh in BP_ThirdPersonCharacter Blueprint
+- Added Fab marketplace content folder containing wolf assets: wolf_demo.uasset, wolf_demo_Skeleton, wolf_demo_Anim, wolf_demo_PhysicsAsset
+**Notes:**
+- Wolf skeleton likely uses different socket names than humanoid (no "HandGrip_R")
+- If `bRotateAroundGripPoint` is enabled, socket name must be updated to a valid wolf socket (or feature should be disabled)
+- Wolf animations don't match humanoid AnimBP — may need adjustment or separate animation blueprint
+**Rationale:** User requested a wolf model to replace the default humanoid character for thematic variety.
