@@ -229,18 +229,13 @@ void USwingComponent::TickSwinging(float DeltaTime)
     FVector NewPos = PivotWorldLocation
         + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
 
-    // If rotating around grip point, adjust position so grip socket stays at pivot
+    // If rotating around grip point, pin grip socket to the beam (pivot)
     if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
     {
-        // Calculate where grip socket would be with current position and rotation
         FVector RotatedGripOffset = TargetRotation.RotateVector(GripSocketLocalOffset);
-        FVector GripSocketCurrentPos = NewPos + RotatedGripOffset;
-
-        // Calculate correction needed to align grip socket with pivot
-        FVector Correction = PivotWorldLocation - GripSocketCurrentPos;
-
-        // Apply correction (scaled down to avoid breaking the swing)
-        NewPos = NewPos + Correction * 0.5f;
+        // Position character so grip socket is exactly at the pivot point
+        // Body hangs below; pendulum angle drives rotation which drives position
+        NewPos = PivotWorldLocation - RotatedGripOffset;
     }
 
     if (DeltaTime > KINDA_SMALL_NUMBER)
