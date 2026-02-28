@@ -2,6 +2,7 @@
 #include "SwingPole.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
@@ -114,6 +115,20 @@ void USwingComponent::OnGrabbed(ASwingPole* Pole)
     CurrentPole        = Pole;
     PivotWorldLocation = Pole->GetGrabPoint(OwnerCharacter->GetActorLocation());
 
+    // Calculate grip socket local offset for rotation calculations
+    if (bRotateAroundGripPoint)
+    {
+        if (USkeletalMeshComponent* SkelMesh = OwnerCharacter->GetMesh())
+        {
+            FVector GripWorldLocation = SkelMesh->GetSocketLocation(GripSocketName);
+            GripSocketLocalOffset = OwnerCharacter->GetActorTransform().Inverse().TransformPosition(GripWorldLocation);
+        }
+        else
+        {
+            GripSocketLocalOffset = FVector::ZeroVector;
+        }
+    }
+
     HangLength = FMath::Max(
         FMath::Abs(PivotWorldLocation.Z - OwnerCharacter->GetActorLocation().Z),
         60.0f);
@@ -191,8 +206,42 @@ void USwingComponent::TickSwinging(float DeltaTime)
         -MaxSwingAngle, MaxSwingAngle);
 
     const FVector OldPos = OwnerCharacter->GetActorLocation();
-    const FVector NewPos = PivotWorldLocation
+
+    // Calculate target rotation for facing direction
+    FRotator TargetRotation = OwnerCharacter->GetActorRotation();
+    const float     TSign  = (SwingAngularVelocity >= 0.0f) ? 1.0f : -1.0f;
+    const FVector   FaceDir = FVector(FMath::Cos(SwingAngle) * TSign, 0.0f, 0.0f);
+    if (!FaceDir.IsNearlyZero())
+    {
+        TargetRotation = FaceDir.Rotation();
+    }
+
+    // If rotating around grip point, add rotation based on swing angle
+    if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
+    {
+        // Character leans forward/backward symmetrically with swing angle
+        // Multiply by TSign to ensure proper direction regardless of swing direction
+        float LeanAmount = FMath::RadiansToDegrees(SwingAngle) * TSign * 1.5f;
+        TargetRotation.Pitch = LeanAmount;
+    }
+
+    // Calculate base swing position (character center moves in arc)
+    FVector NewPos = PivotWorldLocation
         + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
+
+    // If rotating around grip point, adjust position so grip socket stays at pivot
+    if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
+    {
+        // Calculate where grip socket would be with current position and rotation
+        FVector RotatedGripOffset = TargetRotation.RotateVector(GripSocketLocalOffset);
+        FVector GripSocketCurrentPos = NewPos + RotatedGripOffset;
+
+        // Calculate correction needed to align grip socket with pivot
+        FVector Correction = PivotWorldLocation - GripSocketCurrentPos;
+
+        // Apply correction (scaled down to avoid breaking the swing)
+        NewPos = NewPos + Correction * 0.5f;
+    }
 
     if (DeltaTime > KINDA_SMALL_NUMBER)
     {
@@ -200,16 +249,8 @@ void USwingComponent::TickSwinging(float DeltaTime)
     }
 
     OwnerCharacter->SetActorLocation(NewPos, false, nullptr, ETeleportType::TeleportPhysics);
-
-    // Rotate character to face swing direction
-    const float     TSign  = (SwingAngularVelocity >= 0.0f) ? 1.0f : -1.0f;
-    const FVector   FaceDir = FVector(FMath::Cos(SwingAngle) * TSign, 0.0f, 0.0f);
-    if (!FaceDir.IsNearlyZero())
-    {
-        const FRotator Target = FaceDir.Rotation();
-        OwnerCharacter->SetActorRotation(
-            FMath::RInterpTo(OwnerCharacter->GetActorRotation(), Target, DeltaTime, 12.0f));
-    }
+    OwnerCharacter->SetActorRotation(
+        FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 12.0f));
 }
 
 // ---------------------------------------------------------------------------

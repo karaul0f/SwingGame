@@ -92,6 +92,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
     float MaxSwingAngle = 2.2f;
 
+    /** Socket name on the character for grip point (e.g., hand socket) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
+    FName GripSocketName = FName("hand_r");
+
+    /** If true, character rotates around grip point during swing */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
+    bool bRotateAroundGripPoint = false;
+
 private:
     void TryGrab();
     void OnGrabbed(class ASwingPole* Pole);
@@ -110,6 +118,9 @@ private:
     float   GrabAlpha          = 0.0f;
     FVector GrabStartLocation  = FVector::ZeroVector;
     FVector GrabTargetLocation = FVector::ZeroVector;
+
+    /** Local offset from character root to grip socket (calculated on grab) */
+    FVector GripSocketLocalOffset = FVector::ZeroVector;
 
     /** Actual frame-by-frame velocity during swing, used for launch */
     FVector CachedSwingVelocity = FVector::ZeroVector;
