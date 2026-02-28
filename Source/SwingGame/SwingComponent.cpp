@@ -221,7 +221,7 @@ void USwingComponent::TickSwinging(float DeltaTime)
     {
         // Character leans forward/backward symmetrically with swing angle
         // Multiply by TSign to ensure proper direction regardless of swing direction
-        float LeanAmount = FMath::RadiansToDegrees(SwingAngle) * TSign * 1.5f;
+        float LeanAmount = FMath::RadiansToDegrees(SwingAngle) * TSign * 0.8f;
         TargetRotation.Pitch = LeanAmount;
     }
 
