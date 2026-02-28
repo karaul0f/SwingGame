@@ -41,8 +41,8 @@
   - Calculate target rotation based on swing direction (facing direction of motion)
   - Character leans forward/backward with swing angle (Pitch rotation multiplied by 0.8x for balanced effect)
   - Apply target rotation to grip socket offset to get world-space position
-  - Position character with soft correction (50%) to keep grip socket near pivot while maintaining swing physics
-  - This makes the character appear to hang from the grip point while rotating around it
+  - **Position character so grip socket is hard-pinned to the pivot (beam grab point):** `NewPos = PivotWorldLocation - RotatedGripOffset`
+  - This keeps the grip socket fixed at the beam while the body hangs below and rotates/leans with pendulum motion
 - When disabled (default), behavior is 100% identical to original code
 **Rationale:** Previous implementation positioned the character's center around the pole, making the grip point feel disconnected. With this feature enabled, the character visually grips the pole with a specific socket, leans dynamically with the swing motion, and rotates naturally around that point as it swings, improving physical realism and visual feedback. Feature is opt-in to avoid breaking existing setups.
 
