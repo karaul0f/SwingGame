@@ -216,26 +216,28 @@ void USwingComponent::TickSwinging(float DeltaTime)
         TargetRotation = FaceDir.Rotation();
     }
 
-    // If rotating around grip point, add rotation based on swing angle
+    // If rotating around grip point, hang from paw with body below beam
     if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
     {
-        // Character leans forward/backward symmetrically with swing angle
-        // Multiply by TSign to ensure proper direction regardless of swing direction
+        // Base 90° pitch so paw points up (toward beam) and body hangs down
+        // Swing angle adds lean on top of that
         float LeanAmount = FMath::RadiansToDegrees(SwingAngle) * TSign * 0.8f;
-        TargetRotation.Pitch = -LeanAmount;  // Negative so character leans toward swing direction
+        TargetRotation.Pitch = 90.0f + LeanAmount;
     }
 
-    // Calculate base swing position (character center moves in arc)
-    FVector NewPos = PivotWorldLocation
-        + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
-
-    // If rotating around grip point, pin grip socket to the beam (pivot)
+    // Calculate swing position
+    FVector NewPos;
     if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
     {
+        // Pin grip socket to beam, body hangs below via rotation
         FVector RotatedGripOffset = TargetRotation.RotateVector(GripSocketLocalOffset);
-        // Position character so grip socket is exactly at the pivot point
-        // Body hangs below; pendulum angle drives rotation which drives position
-        NewPos = PivotWorldLocation + RotatedGripOffset;
+        NewPos = PivotWorldLocation - RotatedGripOffset;
+    }
+    else
+    {
+        // Default: character center moves in arc below pivot
+        NewPos = PivotWorldLocation
+            + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
     }
 
     if (DeltaTime > KINDA_SMALL_NUMBER)
