@@ -68,14 +68,15 @@
 - `TickWalkingSlope` logic:
   - Performs a **line trace** downward 200 units from character to detect ground surface
   - Extracts surface normal from hit result
+  - Calculates **base pitch angle** from X component of normal: `atan2(-SurfaceNormal.X, SurfaceNormal.Z)` — character follows terrain contour
+    - On downslope: negative pitch (lean forward)
+    - On upslope: positive pitch (lean backward)
   - Calculates **roll angle** from Y component of normal: `atan2(SurfaceNormal.Y, SurfaceNormal.Z)` for side-to-side slope tilt
-  - **Pitch is movement-based only** (not static surface angle): prevents standing on a slope from tilting character unnaturally
-  - **Movement-based lean**: Gets horizontal velocity vector and dot-product with surface normal
-    - If moving upslope (positive dot product), character leans backward (for balance)
-    - If moving downslope (negative dot product), character leans forward
-    - Movement lean is clamped to ±30° to prevent over-tilting
-    - When stationary, pitch remains 0 (upright)
-  - Creates target rotation: pitch (movement only) and roll (from surface), **yaw preserved from current character rotation**
+  - **Additional movement-based lean**: When moving, gets horizontal velocity and dot-product with surface normal
+    - If moving upslope (positive dot product), add backward lean for balance
+    - If moving downslope (negative dot product), add forward lean
+    - Movement lean is clamped to ±20° and multiplied by 30° to add to base pitch
+  - Creates target rotation: pitch (base + movement) and roll (from surface), **yaw preserved from current character rotation**
   - Uses smooth interpolation (speed 5.0) to gradually rotate from current to target rotation
 - Only active when `IsMovingOnGround()` returns true — disabled in air or while swinging
 **Rationale:** Walking on slopes with fixed upright orientation looks stiff and unnatural. Combining surface-normal tilt with movement-based lean creates natural leaning that matches both terrain and direction of travel, improving visual feedback and immersion.

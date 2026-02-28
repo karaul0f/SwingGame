@@ -324,14 +324,13 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
     // Get surface normal
     FVector SurfaceNormal = HitResult.ImpactNormal;
 
-    // Calculate roll from surface normal (side-to-side tilt for sloped terrain)
+    // Base pitch from surface normal (character follows terrain)
+    // When on downslope, pitch becomes negative (lean forward)
+    // When on upslope, pitch becomes positive (lean backward)
+    float PitchAngle = FMath::Atan2(-SurfaceNormal.X, SurfaceNormal.Z);
     float RollAngle = FMath::Atan2(SurfaceNormal.Y, SurfaceNormal.Z);
 
-    // Pitch is based on MOVEMENT only, not static surface angle
-    // This prevents standing on a slope from automatically tilting the character
-    float PitchAngle = 0.0f;
-
-    // Factor in movement direction for dynamic lean
+    // Factor in movement direction for additional dynamic lean
     FVector Velocity = CMC->Velocity;
     FVector HorizontalVelocity = FVector(Velocity.X, Velocity.Y, 0.0f);
 
@@ -344,10 +343,10 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
         // This determines if character is moving up or down slope
         float SlopeInfluence = FVector::DotProduct(MovementDir, SurfaceNormal);
 
-        // Movement-based lean: character leans backward when moving upslope (for balance),
-        // forward when moving downslope. Clamped to ±30 degrees
-        float MovementLean = FMath::Clamp(-SlopeInfluence * 45.0f, -30.0f, 30.0f);
-        PitchAngle = FMath::DegreesToRadians(MovementLean);
+        // Additional movement-based lean: character leans backward when moving upslope (for balance),
+        // forward when moving downslope. Clamped to ±20 degrees to not over-amplify
+        float MovementLean = FMath::Clamp(-SlopeInfluence * 30.0f, -20.0f, 20.0f);
+        PitchAngle += FMath::DegreesToRadians(MovementLean);
     }
 
     // Create target rotation (preserve character's yaw)
