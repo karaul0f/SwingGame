@@ -235,7 +235,7 @@ void USwingComponent::TickSwinging(float DeltaTime)
         FVector RotatedGripOffset = TargetRotation.RotateVector(GripSocketLocalOffset);
         // Position character so grip socket is exactly at the pivot point
         // Body hangs below; pendulum angle drives rotation which drives position
-        NewPos = PivotWorldLocation - RotatedGripOffset;
+        NewPos = PivotWorldLocation + RotatedGripOffset;
     }
 
     if (DeltaTime > KINDA_SMALL_NUMBER)
