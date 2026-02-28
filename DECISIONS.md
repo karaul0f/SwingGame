@@ -71,8 +71,8 @@
   - Calculates **pitch angle** from X component of normal: `atan2(-SurfaceNormal.X, SurfaceNormal.Z)`
   - Calculates **roll angle** from Y component of normal: `atan2(SurfaceNormal.Y, SurfaceNormal.Z)`
   - **Movement-based lean**: Gets horizontal velocity vector and dot-product with surface normal
-    - If moving upslope (positive dot product), character leans forward
-    - If moving downslope (negative dot product), character leans backward
+    - If moving upslope (positive dot product), character leans backward (for balance)
+    - If moving downslope (negative dot product), character leans forward
     - Movement lean is clamped to ±30° to prevent over-tilting
   - Creates target rotation: pitch (surface + movement) and roll from surface, **yaw preserved from current character rotation**
   - Uses smooth interpolation (speed 5.0) to gradually rotate from current to target rotation

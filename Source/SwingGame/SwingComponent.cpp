@@ -347,9 +347,9 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
         // This determines if character is moving up or down slope
         float SlopeInfluence = FVector::DotProduct(MovementDir, SurfaceNormal);
 
-        // Add movement-based lean: character leans forward when moving upslope
-        // Clamp the lean to prevent over-tilting (max ±30 degrees additional lean)
-        float MovementLean = FMath::Clamp(SlopeInfluence * 45.0f, -30.0f, 30.0f);
+        // Add movement-based lean: character leans backward when moving upslope (for balance),
+        // forward when moving downslope. Clamp to prevent over-tilting (max ±30 degrees additional lean)
+        float MovementLean = FMath::Clamp(-SlopeInfluence * 45.0f, -30.0f, 30.0f);
         PitchAngle += FMath::DegreesToRadians(MovementLean);
     }
 
