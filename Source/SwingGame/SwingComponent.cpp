@@ -324,11 +324,12 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
     // Get surface normal
     FVector SurfaceNormal = HitResult.ImpactNormal;
 
-    // Calculate pitch and roll from surface normal
-    // Pitch: tilt forward/backward based on X component of normal
-    // Roll: tilt side-to-side based on Y component of normal
-    float PitchAngle = FMath::Atan2(-SurfaceNormal.X, SurfaceNormal.Z);
+    // Calculate roll from surface normal (side-to-side tilt for sloped terrain)
     float RollAngle = FMath::Atan2(SurfaceNormal.Y, SurfaceNormal.Z);
+
+    // Pitch is based on MOVEMENT only, not static surface angle
+    // This prevents standing on a slope from automatically tilting the character
+    float PitchAngle = 0.0f;
 
     // Factor in movement direction for dynamic lean
     FVector Velocity = CMC->Velocity;
@@ -339,18 +340,14 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
         // Normalize movement direction
         FVector MovementDir = HorizontalVelocity.GetSafeNormal();
 
-        // Get the character's forward direction (affected only by yaw, not pitch/roll)
-        FRotator CurrentRot = OwnerCharacter->GetActorRotation();
-        FVector CharForward = FRotationMatrix(FRotator(0.0f, CurrentRot.Yaw, 0.0f)).GetUnitAxis(EAxis::X);
-
         // Calculate how much the movement direction aligns with surface normal
         // This determines if character is moving up or down slope
         float SlopeInfluence = FVector::DotProduct(MovementDir, SurfaceNormal);
 
-        // Add movement-based lean: character leans backward when moving upslope (for balance),
-        // forward when moving downslope. Clamp to prevent over-tilting (max ±30 degrees additional lean)
+        // Movement-based lean: character leans backward when moving upslope (for balance),
+        // forward when moving downslope. Clamped to ±30 degrees
         float MovementLean = FMath::Clamp(-SlopeInfluence * 45.0f, -30.0f, 30.0f);
-        PitchAngle += FMath::DegreesToRadians(MovementLean);
+        PitchAngle = FMath::DegreesToRadians(MovementLean);
     }
 
     // Create target rotation (preserve character's yaw)
