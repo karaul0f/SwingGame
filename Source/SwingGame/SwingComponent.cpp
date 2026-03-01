@@ -2,7 +2,6 @@
 #include "SwingPole.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
@@ -127,20 +126,6 @@ void USwingComponent::OnGrabbed(ASwingPole* Pole)
     CurrentPole        = Pole;
     PivotWorldLocation = Pole->GetGrabPoint(OwnerCharacter->GetActorLocation());
 
-    // Calculate grip socket local offset for rotation calculations
-    if (bRotateAroundGripPoint)
-    {
-        if (USkeletalMeshComponent* SkelMesh = OwnerCharacter->GetMesh())
-        {
-            FVector GripWorldLocation = SkelMesh->GetSocketLocation(GripSocketName);
-            GripSocketLocalOffset = OwnerCharacter->GetActorTransform().Inverse().TransformPosition(GripWorldLocation);
-        }
-        else
-        {
-            GripSocketLocalOffset = FVector::ZeroVector;
-        }
-    }
-
     HangLength = FMath::Max(
         FMath::Abs(PivotWorldLocation.Z - OwnerCharacter->GetActorLocation().Z),
         60.0f);
@@ -218,39 +203,8 @@ void USwingComponent::TickSwinging(float DeltaTime)
         -MaxSwingAngle, MaxSwingAngle);
 
     const FVector OldPos = OwnerCharacter->GetActorLocation();
-
-    // Calculate target rotation for facing direction
-    FRotator TargetRotation = OwnerCharacter->GetActorRotation();
-    const float     TSign  = (SwingAngularVelocity >= 0.0f) ? 1.0f : -1.0f;
-    const FVector   FaceDir = FVector(FMath::Cos(SwingAngle) * TSign, 0.0f, 0.0f);
-    if (!FaceDir.IsNearlyZero())
-    {
-        TargetRotation = FaceDir.Rotation();
-    }
-
-    // If rotating around grip point, hang from paw with body below beam
-    if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
-    {
-        // Base 90° pitch so paw points up (toward beam) and body hangs down
-        // Swing angle adds lean on top of that
-        float LeanAmount = FMath::RadiansToDegrees(SwingAngle) * TSign * 0.8f;
-        TargetRotation.Pitch = 90.0f + LeanAmount;
-    }
-
-    // Calculate swing position
-    FVector NewPos;
-    if (bRotateAroundGripPoint && !GripSocketLocalOffset.IsNearlyZero())
-    {
-        // Pin grip socket to beam, body hangs below via rotation
-        FVector RotatedGripOffset = TargetRotation.RotateVector(GripSocketLocalOffset);
-        NewPos = PivotWorldLocation - RotatedGripOffset;
-    }
-    else
-    {
-        // Default: character center moves in arc below pivot
-        NewPos = PivotWorldLocation
-            + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
-    }
+    const FVector NewPos = PivotWorldLocation
+        + FVector(FMath::Sin(SwingAngle), 0.0f, -FMath::Cos(SwingAngle)) * HangLength;
 
     if (DeltaTime > KINDA_SMALL_NUMBER)
     {
@@ -258,8 +212,16 @@ void USwingComponent::TickSwinging(float DeltaTime)
     }
 
     OwnerCharacter->SetActorLocation(NewPos, false, nullptr, ETeleportType::TeleportPhysics);
-    OwnerCharacter->SetActorRotation(
-        FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime, 12.0f));
+
+    // Rotate character to face swing direction
+    const float     TSign  = (SwingAngularVelocity >= 0.0f) ? 1.0f : -1.0f;
+    const FVector   FaceDir = FVector(FMath::Cos(SwingAngle) * TSign, 0.0f, 0.0f);
+    if (!FaceDir.IsNearlyZero())
+    {
+        const FRotator Target = FaceDir.Rotation();
+        OwnerCharacter->SetActorRotation(
+            FMath::RInterpTo(OwnerCharacter->GetActorRotation(), Target, DeltaTime, 12.0f));
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -325,8 +287,6 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
     FVector SurfaceNormal = HitResult.ImpactNormal;
 
     // Base pitch from surface normal (character follows terrain)
-    // When on downslope, pitch becomes negative (lean forward)
-    // When on upslope, pitch becomes positive (lean backward)
     float PitchAngle = FMath::Atan2(-SurfaceNormal.X, SurfaceNormal.Z);
     float RollAngle = FMath::Atan2(SurfaceNormal.Y, SurfaceNormal.Z);
 
@@ -336,15 +296,8 @@ void USwingComponent::TickWalkingSlope(float DeltaTime)
 
     if (!HorizontalVelocity.IsNearlyZero())
     {
-        // Normalize movement direction
         FVector MovementDir = HorizontalVelocity.GetSafeNormal();
-
-        // Calculate how much the movement direction aligns with surface normal
-        // This determines if character is moving up or down slope
         float SlopeInfluence = FVector::DotProduct(MovementDir, SurfaceNormal);
-
-        // Additional movement-based lean: character leans backward when moving upslope (for balance),
-        // forward when moving downslope. Clamped to ±20 degrees to not over-amplify
         float MovementLean = FMath::Clamp(-SlopeInfluence * 30.0f, -20.0f, 20.0f);
         PitchAngle += FMath::DegreesToRadians(MovementLean);
     }

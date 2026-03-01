@@ -29,22 +29,9 @@
 - `LaunchSpeedMultiplier` default raised from 1.1 to 1.8 for a more pronounced launch
 **Rationale:** Momentum was technically applied but immediately eaten by air braking deceleration and potentially overridden by Jump(). These fixes ensure the player visibly flies in the swing direction after release.
 
-## 4. Character rotation around grip point during swing
-**Date:** 2026-02-28
-**Decision:** Character visually rotates around the grip socket (hand) during the swing, creating a more dynamic and realistic hanging/swinging animation.
-**Implementation:**
-- Added `GripSocketName` property (default: "hand_r") to specify which socket acts as the grip point
-- Added `bRotateAroundGripPoint` boolean flag (default: false) to enable/disable this behavior
-- Added `GripSocketLocalOffset` to store the local-space offset from character root to the grip socket, calculated on grab
-- In `OnGrabbed`: When `bRotateAroundGripPoint` is true, calculate grip socket world location from skeletal mesh and store as local offset
-- In `TickSwinging`:
-  - Calculate target rotation based on swing direction (facing direction of motion)
-  - Character leans forward/backward with swing angle (Pitch rotation multiplied by 0.8x for balanced effect)
-  - Apply target rotation to grip socket offset to get world-space position
-  - **Position character so grip socket is hard-pinned to the pivot (beam grab point):** `NewPos = PivotWorldLocation - RotatedGripOffset`
-  - This keeps the grip socket fixed at the beam while the body hangs below and rotates/leans with pendulum motion
-- When disabled (default), behavior is 100% identical to original code
-**Rationale:** Previous implementation positioned the character's center around the pole, making the grip point feel disconnected. With this feature enabled, the character visually grips the pole with a specific socket, leans dynamically with the swing motion, and rotates naturally around that point as it swings, improving physical realism and visual feedback. Feature is opt-in to avoid breaking existing setups.
+## 4. [REVERTED] Character rotation around grip point during swing
+**Date:** 2026-02-28 | **Reverted:** 2026-03-02
+**Decision:** Feature reverted — caused shaking and coordinate jumps during swing. Code restored to pre-grip-point state.
 
 ## 5. Replace humanoid character with wolf model
 **Date:** 2026-02-28
@@ -80,3 +67,7 @@
   - Uses smooth interpolation (speed 5.0) to gradually rotate from current to target rotation
 - Only active when `IsMovingOnGround()` returns true — disabled in air or while swinging
 **Rationale:** Walking on slopes with fixed upright orientation looks stiff and unnatural. Combining surface-normal tilt with movement-based lean creates natural leaning that matches both terrain and direction of travel, improving visual feedback and immersion.
+
+## 7. [REVERTED] Fix swing shaking and coordinate jumps
+**Date:** 2026-03-01 | **Reverted:** 2026-03-02
+**Decision:** Reverted along with grip point rotation — the fixes were tightly coupled to that feature.
