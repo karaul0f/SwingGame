@@ -68,6 +68,15 @@
 - Only active when `IsMovingOnGround()` returns true — disabled in air or while swinging
 **Rationale:** Walking on slopes with fixed upright orientation looks stiff and unnatural. Combining surface-normal tilt with movement-based lean creates natural leaning that matches both terrain and direction of travel, improving visual feedback and immersion.
 
+## 8. Increase swing intensity (tuned for balance)
+**Date:** 2026-03-02
+**Decision:** Make swing more dynamic and energetic while avoiding overshooting limits.
+**Implementation:**
+- `AutoSwingForce`: 3.0 → 3.7 — character pumps more energy into the swing, but not so much it hits the angle limit
+- `SwingDamping`: 0.985 → 0.988 — slightly reduced damping, maintains momentum better
+- `LaunchSpeedMultiplier`: 1.8 → 2.1 — character launches faster on release
+**Rationale:** Initial attempt (4.5 / 0.99 / 2.2) caused character to get stuck at extreme swing angles due to excessive force. Balanced values (3.7 / 0.988 / 2.1) provide more intense feel while keeping the swing oscillating smoothly.
+
 ## 7. [REVERTED] Fix swing shaking and coordinate jumps
 **Date:** 2026-03-01 | **Reverted:** 2026-03-02
 **Decision:** Reverted along with grip point rotation — the fixes were tightly coupled to that feature.

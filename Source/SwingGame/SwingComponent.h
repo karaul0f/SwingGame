@@ -78,16 +78,16 @@ public:
     /** Force applied automatically each frame to keep the swing going.
      *  Acts in the direction of current angular velocity (energy pumping). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
-    float AutoSwingForce = 3.0f;
+    float AutoSwingForce = 3.7f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
     float GrabTransitionTime = 0.18f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
-    float LaunchSpeedMultiplier = 1.8f;
+    float LaunchSpeedMultiplier = 2.1f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
-    float SwingDamping = 0.985f;
+    float SwingDamping = 0.988f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing|Settings")
     float MaxSwingAngle = 2.2f;
